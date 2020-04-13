@@ -11,6 +11,7 @@ const rename       = require('gulp-rename')
 const replace      = require('gulp-replace')
 const cleanCSS     = require('gulp-clean-css')
 const sourcemaps   = require('gulp-sourcemaps')
+const urlBuilder   = require('gulp-url-builder')
 const autoprefixer = require('gulp-autoprefixer')
 const htmlbeautify = require('gulp-html-beautify')
 
@@ -22,17 +23,6 @@ const destination = 'docs'
 
 
 
-/** Utilities **/
-
-const pathbuilder = (path) => {
-  if ('index' !== path.basename) {
-    path.dirname = path.basename.split('_').join('/')
-    path.basename = 'index'
-  }
-}
-
-
-
 /** Pug **/
 
 gulp.task('pug:html', () => {
@@ -40,7 +30,7 @@ gulp.task('pug:html', () => {
     'src/pug/views/**/*.pug'
   ]).pipe( pug() )
     .pipe( htmlbeautify({ indent_size: 2 }) )
-    .pipe( rename((path) => { pathbuilder(path) }) )
+    .pipe( urlBuilder() )
     .pipe( gulp.dest(destination) )
     .pipe( sync.reload({ stream: true }) )
 })
