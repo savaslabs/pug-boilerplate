@@ -53,7 +53,7 @@ gulp.task('watch:pug', () => {
 // sass master
 gulp.task('sass', () => {
   return gulp.src([
-    'src/scss/*.+(sass|scss|css)',
+    'src/scss/**/*.+(sass|scss|css)',
     '!**/_*.*'
   ]).pipe( sourcemaps.init() )
     .pipe( sass() )
