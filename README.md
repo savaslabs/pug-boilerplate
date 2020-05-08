@@ -6,6 +6,8 @@ A boilerplate setup for projects using [Gulp](https://gulpjs.com/) to compile [P
 
 ## Getting Started
 
+Note: This is a template repository. New projects using this repo as a template should be created using the "repository template" option on the [Create a New Repository](https://github.com/new) page.
+
 ### Dependencies
 * Node & npm
 * Gulp 4
