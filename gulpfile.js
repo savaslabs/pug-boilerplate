@@ -1,12 +1,15 @@
-/** Modules **/
+// modules
+const fs      = require('fs')
+const bsync   = require('browser-sync').create()
+const webpack = require('webpack-stream')
 
-const fs           = require('fs')
-const sync         = require('browser-sync').create()
-const gulp         = require('gulp')
+// gulp
+const { src, dest, series, parallel, watch } = require('gulp')
+
+// gulp plugins
 const pug          = require('gulp-pug')
 const sass         = require('gulp-sass')
 const data         = require('gulp-data')
-const concat       = require('gulp-concat')
 const rename       = require('gulp-rename')
 const replace      = require('gulp-replace')
 const cleanCSS     = require('gulp-clean-css')
@@ -15,133 +18,68 @@ const urlBuilder   = require('gulp-url-builder')
 const autoprefixer = require('gulp-autoprefixer')
 const htmlbeautify = require('gulp-html-beautify')
 
-
-
-/** Variables **/
-
+// variables
 const destination = 'docs'
+const webpackOptions = { mode: 'development' }
+const locals = {}
 
-
-
-/** Pug **/
-
-gulp.task('pug:html', () => {
-  return gulp.src([
+// pug
+function pugCompile() {
+  return src([
     'src/pug/views/**/*.pug'
-  ]).pipe( pug() )
+  ]).pipe( pug({ locals }) )
     .pipe( htmlbeautify({ indent_size: 2 }) )
     .pipe( urlBuilder() )
-    .pipe( gulp.dest(destination) )
-    .pipe( sync.reload({ stream: true }) )
-})
+    .pipe( dest(destination) )
+    .pipe( bsync.reload({ stream: true }) )
+}
+function pugWatch(cb) {
+  watch(['src/pug/**/*.pug'], pugCompile)
+  cb()
+}
 
-// pug master
-gulp.task('pug', gulp.parallel('pug:html'))
-
-// pug watcher
-gulp.task('watch:pug', () => {
-  gulp.watch(
-    'src/pug/**/*.pug',
-    gulp.series('pug')
-  )
-})
-
-
-
-/** Sass **/
-
-// sass master
-gulp.task('sass', () => {
-  return gulp.src([
+// sass
+function sassCompile() {
+  return src([
     'src/scss/**/*.+(sass|scss|css)',
-    '!**/_*.*'
-  ]).pipe( sourcemaps.init() )
-    .pipe( sass() )
+    '!src/scss/**/_*.*'
+  ]).pipe( sass({ includePaths: ['node_modules'] }) )
     .pipe( autoprefixer() )
     .pipe( cleanCSS() )
-    .pipe( sourcemaps.write('./') )
-    .pipe( gulp.dest(`${destination}/css`) )
-    .pipe( sync.reload({ stream: true }) )
-})
+    .pipe( dest(`${destination}/css`) )
+    .pipe( bsync.reload({ stream: true }) )
+}
+function sassWatch(cb) {
+  watch(['src/scss/**/*.+(sass|scss|css)'], sassCompile)
+  cb()
+}
 
-// sass watcher
-gulp.task('watch:sass', () => {
-  gulp.watch(
-    'src/scss/*.+(sass|scss)',
-    gulp.series('sass')
-  )
-})
+// javascript
+function jsBundle() {
+  return src('src/js/app.js')
+    .pipe( webpack(webpackOptions) )
+    .pipe( rename({ basename: 'app' }) )
+    .pipe( dest(`${destination}/js`) )
+    .pipe( bsync.reload({ stream: true }) )
+}
+function jsWatch(cb) {
+  watch('src/js/**/*.js', jsBundle)
+  cb()
+}
 
-
-
-/** Javascript **/
-
-gulp.task('js:bundle', () => {
-  return gulp.src('src/js/**/*.js')
-    .pipe( gulp.dest(`${destination}/js`) )
-})
-
-// js master
-gulp.task('js',
-  gulp.parallel(
-    'js:bundle'
-  )
-)
-
-// js watcher
-gulp.task('watch:js', () => {
-  gulp.watch(
-    'src/js/**/*.js',
-    gulp.series('js')
-  )
-})
-
-
-
-/** Browser Sync **/
-
-gulp.task('sync', () => {
-  sync.init({
+// browsersync
+function sync() {
+  bsync.init({
     server: {
       baseDir: `./${destination}`
     }
   })
-})
+}
 
-
-
-/** Watch **/
-
-gulp.task('watch',
-  gulp.parallel(
-    'watch:js',
-    'watch:sass',
-    'watch:pug'
-  )
-)
-
-
-
-/** Master **/
-
-gulp.task('master',
-  gulp.parallel(
-    'js',
-    'sass',
-    'pug'
-  )
-)
-
-
-
-/** Default **/
-
-gulp.task('default',
-  gulp.series(
-    'master',
-    gulp.parallel(
-      'watch',
-      'sync'
-    )
-  )
-)
+// exports
+exports.pug     = pugCompile
+exports.sass    = sassCompile
+exports.js      = jsBundle
+exports.build   = parallel(exports.pug, exports.sass, exports.js)
+exports.watch   = series(pugWatch, sassWatch, jsWatch)
+exports.default = series(exports.build, exports.watch, sync)
