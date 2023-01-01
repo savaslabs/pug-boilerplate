@@ -35,6 +35,6 @@
   },
   "dependencies": {
     "gulp-cli": "^2.3.0",
-    "webpack-stream": "^6.1.0"
+    "webpack-stream": "^7.0.0"
   }
 }
