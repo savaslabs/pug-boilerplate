@@ -1,9 +1,10 @@
 extends ../templates/_root
 
+append meta
+  title Hello World
+
 append body
-  
-  include ../includes/header
-  
+  h1 Hello World
   p test
   +helloWorld
   +helloWorld('Ava')
